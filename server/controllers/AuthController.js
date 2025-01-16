@@ -5,7 +5,7 @@ import {EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE} from "../config/EmailTem
 import {validateFields} from "../utils/ValidationUtils.js";
 import {MESSAGES} from "../constants/Messages.js";
 import {loginUser, registerUser} from "../services/AuthService.js";
-import {setCookie} from "../utils/CookieUtils.js";
+import {clearCookie, setCookie} from "../utils/CookieUtils.js";
 import {sendWelcomeEmail} from "../services/MailService.js";
 
 export const register = async (req, res) => {
@@ -39,12 +39,8 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        res.clearCookie('token', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-        });
-        return res.json({success: true, message: 'User logged out successfully'})
+        await clearCookie(res);
+        return res.status(200).json({success: true, message: MESSAGES.LOGOUT_SUCCESS});
     } catch (error) {
         return res.json({success: false, message: error.message});
     }
