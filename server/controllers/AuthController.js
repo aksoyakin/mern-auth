@@ -1,12 +1,13 @@
 import bcrypt from "bcryptjs";
 import userModel from "../models/UserModel.js";
 import transporter from "../config/NodeMailer.js";
-import {EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE} from "../config/EmailTemplates.js";
+import {PASSWORD_RESET_TEMPLATE} from "../config/EmailTemplates.js";
 import {validateFields} from "../utils/ValidationUtils.js";
 import {MESSAGES} from "../constants/Messages.js";
-import {loginUser, registerUser} from "../services/AuthService.js";
+import {loginUser, registerUser, generateVerificationOtp} from "../services/AuthService.js";
 import {clearCookie, setCookie} from "../utils/CookieUtils.js";
-import {sendWelcomeEmail} from "../services/MailService.js";
+import {sendAccountVerificationEmail, sendWelcomeEmail} from "../services/MailService.js";
+import {findUserById} from "../services/UserService.js";
 
 export const register = async (req, res) => {
     const {name, email, password} = req.body;
@@ -46,29 +47,18 @@ export const logout = async (req, res) => {
     }
 }
 
-export const sendVerifyOtp = async (req, res) => {
+export const sendVerificationOtp = async (req, res) => {
     try {
         const {userId} = req.body;
-        const user = await userModel.findById(userId);
-        if (user.isAccountVerified) {
-            return res.json({success: false, message: 'Account already verified.'})
-        }
-        const otp = String(Math.floor(100000 + Math.random () * 900000));
-        user.verifyOtp = otp;
-        user.verifyOtpExpiredAt = Date.now() + 24 * 60 * 60 * 1000;
-        await user.save();
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: user.email,
-            subject: "Account Verification OTP",
-            //text: `Your OTP is ${otp}. Verify your account using this OTP.`,
-            html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email),
-        }
-        await transporter.sendMail(mailOptions);
-
-        res.json({success: true, message: 'Verification OTP sent on email.'})
+        const otp = await generateVerificationOtp(userId);
+        const user = await findUserById(userId);
+        await sendAccountVerificationEmail(user.email, otp);
+        return res.status(200).json({
+            success: true,
+            message: MESSAGES.OTP_SENT
+        });
     } catch (error) {
-       res.json({success: false, message: 'Verify Otp!'})
+        return res.json({success: false, message: error.message});
     }
 }
 

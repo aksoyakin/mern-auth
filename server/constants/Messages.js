@@ -11,4 +11,6 @@ export const MESSAGES = {
     OTP_EXPIRED: "OTP has expired!",
     EMAIL_VERIFIED: "Email verified successfully.",
     PASSWORD_RESET_SUCCESS: "Password has been reset successfully..",
+    USER_NOT_FOUND: "User not found!",
+    ALREADY_VERIFIED: "Account already verified!"
 };

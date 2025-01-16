@@ -10,3 +10,15 @@ export const createUser = async (name, email, password) => {
     const user = new userModel({name, email, password: hashedPassword});
     return await user.save();
 }
+
+export const findUserById = async (userId) => {
+    return userModel.findById(userId);
+}
+
+export const updateUserOtp = async (userId, otp, expiryTime) => {
+    return userModel.findByIdAndUpdate(
+        userId,
+        {verifyOtp: otp, verifyOtpExpiredAt: expiryTime},
+        {new: true}
+    );
+}

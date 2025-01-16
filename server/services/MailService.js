@@ -1,4 +1,5 @@
 import transporter from "../config/NodeMailer.js";
+import {EMAIL_VERIFY_TEMPLATE} from "../config/EmailTemplates.js";
 
 export const sendEmail = async ({to, subject, html, text}) => {
     try {
@@ -24,5 +25,15 @@ export const sendWelcomeEmail = async (email) => {
         to: email,
         subject: mailSubject,
         text: welcomeText,
+    })
+}
+
+export const sendAccountVerificationEmail = async (email, otp) => {
+    await sendEmail({
+        to: email,
+        subject: "Account Verification",
+        html: EMAIL_VERIFY_TEMPLATE
+            .replace("{{otp}}", otp)
+            .replace("{{email}}", email)
     })
 }
