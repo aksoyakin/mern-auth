@@ -1,11 +1,10 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import userModel from "../models/UserModel.js";
 import transporter from "../config/NodeMailer.js";
 import {EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE} from "../config/EmailTemplates.js";
 import {validateFields} from "../utils/ValidationUtils.js";
 import {MESSAGES} from "../constants/Messages.js";
-import {registerUser} from "../services/AuthService.js";
+import {loginUser, registerUser} from "../services/AuthService.js";
 import {setCookie} from "../utils/CookieUtils.js";
 import {sendWelcomeEmail} from "../services/MailService.js";
 
@@ -26,29 +25,15 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
     const {email, password} = req.body;
-    if (!email || !password) {
-        return res.json({success: false, message: 'Email and password are required!'});
+    if (!validateFields(email, password)) {
+        return res.status(400).json({success: false, message: MESSAGES.MISSING_DETAILS});
     }
     try {
-        const user = await userModel.findOne({email});
-        if(!user){
-            return res.json({success: false, message: 'User does not exist or invalid email!'})
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if(!isMatch){
-            return res.json({success: false, message: 'Invalid password!'})
-        }
-        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: '7d'});
-
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        })
-        return res.json({success: true, message: 'User logged in successfully!'})
+        const {token} = await loginUser(email, password);
+        setCookie(res, token);
+        res.status(200).json({success: true, message: MESSAGES.LOGIN_SUCCESS});
     } catch (error) {
-        return res.json({success: false, message: error.message});
+        res.json({success: false, message: error.message});
     }
 }
 
