@@ -24,7 +24,6 @@ export const loginUser = async (email, password) => {
 
 export const generateVerificationOtp = async (userId) => {
     const user = await findUserById(userId);
-    if (!user) {throw new Error (MESSAGES.USER_NOT_FOUND)}
     if (user.isAccountVerified) {throw new Error (MESSAGES.ALREADY_VERIFIED)}
     const otp = generateSixDigitOtp();
     const expiryTime = generateExpiryTime(24);
