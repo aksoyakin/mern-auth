@@ -1,5 +1,5 @@
 import transporter from "../config/NodeMailer.js";
-import {EMAIL_VERIFY_TEMPLATE} from "../config/EmailTemplates.js";
+import {EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE} from "../config/EmailTemplates.js";
 
 export const sendEmail = async ({to, subject, html, text}) => {
     try {
@@ -33,6 +33,16 @@ export const sendAccountVerificationEmail = async (email, otp) => {
         to: email,
         subject: "Account Verification",
         html: EMAIL_VERIFY_TEMPLATE
+            .replace("{{otp}}", otp)
+            .replace("{{email}}", email)
+    })
+}
+
+export const sendPasswordResetEmail = async (email, otp) => {
+    await sendEmail({
+        to: email,
+        subject: "Password Reset",
+        html: PASSWORD_RESET_TEMPLATE
             .replace("{{otp}}", otp)
             .replace("{{email}}", email)
     })

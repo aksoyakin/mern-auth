@@ -1,7 +1,6 @@
-import {createUser, findUserByEmail, findUserById, updateUserOtp} from "./UserService.js";
+import {createUser, findUserByEmail, findUserById, updateUserVerifyOtp} from "./UserService.js";
 import {MESSAGES} from "../constants/Messages.js";
-import {comparePasswords, createToken} from "../utils/TokenUtils.js";
-import {generateExpiryTime, generateSixDigitOtp} from "./OtpService.js";
+import {comparePasswords, createToken} from "../utils/AuthUtils.js";
 
 export const registerUser = async (name, email, password) => {
     const existingUser = await findUserByEmail(email);
@@ -22,11 +21,17 @@ export const loginUser = async (email, password) => {
     return {existingUser, token};
 }
 
+export const generateExpiryTime = (hours = 24) => {
+    return Date.now() + hours * 60 * 60 * 1000;
+}
+export const generateSixDigitOtp = () => {
+    return String(Math.floor(100000 + Math.random() * 900000));
+}
 export const generateVerificationOtp = async (userId) => {
     const user = await findUserById(userId);
     if (user.isAccountVerified) {throw new Error (MESSAGES.ALREADY_VERIFIED)}
     const otp = generateSixDigitOtp();
     const expiryTime = generateExpiryTime(24);
-    await updateUserOtp(userId, otp, expiryTime);
+    await updateUserVerifyOtp(userId, otp, expiryTime);
     return otp;
 }
